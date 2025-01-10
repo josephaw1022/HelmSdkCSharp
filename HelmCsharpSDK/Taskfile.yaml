@@ -1,0 +1,25 @@
+version: '3'
+
+tasks:
+  default:
+    desc: "List all available tasks"
+    cmds:
+      - task --list
+
+  run:
+    desc: "Run the .NET 8 console application"
+    cmds:
+      - echo "Running the .NET 8 console application..."
+      - docker run -it --rm --name dotnet-container -v ${pwd}:/app-root -w /app-root dotnet-8-build /bin/bash -c "dotnet run"
+
+  build-image:
+    desc: "Build .NET 8 build Docker image"
+    cmds:
+      - echo "Building the .NET 8 build Docker image..."
+      - docker build -f Containerfile -t  dotnet-console-app .
+  
+  run-image:
+    desc: "Run the .NET 8 console application"
+    cmds:
+      - echo "Running the .NET 8 console application..."
+      - docker run -it --rm dotnet-console-app

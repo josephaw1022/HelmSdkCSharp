@@ -1,0 +1,14 @@
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\bin\Debug\net8.0\HelmCsharpSDK.exe
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\bin\Debug\net8.0\HelmCsharpSDK.deps.json
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\bin\Debug\net8.0\HelmCsharpSDK.runtimeconfig.json
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\bin\Debug\net8.0\HelmCsharpSDK.dll
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\bin\Debug\net8.0\HelmCsharpSDK.pdb
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.AssemblyInfoInputs.cache
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.AssemblyInfo.cs
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.csproj.CoreCompileInputs.cache
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.dll
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\refint\HelmCsharpSDK.dll
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.pdb
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\HelmCsharpSDK.genruntimeconfig.cache
+C:\Users\JoeWhiteaker\source\repos\HelmCSharp\HelmCsharpSDK\obj\Debug\net8.0\ref\HelmCsharpSDK.dll

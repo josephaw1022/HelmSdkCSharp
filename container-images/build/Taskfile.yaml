@@ -1,0 +1,20 @@
+version: '3'
+
+tasks:
+
+  default:
+    desc: "List all available tasks"
+    cmds:
+      - task --list
+
+  build:
+    desc: "Build .NET 8 build Docker image"
+    cmds:
+      - echo "Building the .NET 8 build Docker image..."
+      - docker build -f Containerfile -t dotnet-8-build .
+  
+  delete:
+    desc: "Delete .NET 8 build Docker image"
+    cmds:
+      - echo "Deleting the .NET 8 build Docker image..."
+      - docker rmi dotnet-8-build

@@ -1,0 +1,47 @@
+# Stage 1: Build the .NET application using the custom build image
+FROM dotnet-8-build:latest AS build
+WORKDIR /opt/app-root/src
+
+
+# Switch to root for building the application
+USER 0
+
+# Copy the solution and project files
+COPY HelmCsharpSDK.csproj HelmCsharpSDK.csproj
+COPY HelmCsharpSDK.sln HelmCsharpSDK.sln
+
+# Restore the dependencies (via nuget) using the .csproj file
+RUN dotnet restore HelmCsharpSDK.csproj
+
+# Copy the remaining source code
+COPY . .
+
+# Ensure correct permissions on the source code directory before building
+RUN chown -R $APP_UID:$APP_UID /opt/app-root/src && fix-permissions /opt/app-root/src
+
+# Build the application specifying the .csproj file
+RUN dotnet build HelmCsharpSDK.csproj -c Release
+
+# Publish the application specifying the .csproj file
+RUN dotnet publish HelmCsharpSDK.csproj -c Release -o /app/publish
+
+
+
+# Stage 2: Run the application using the custom runtime image
+FROM dotnet-8-runtime:latest AS final
+WORKDIR /app
+
+# Switch to root for copying the files and fixing permissions
+USER root
+
+# Copy the published output from the build stage
+COPY --from=build /app/publish .
+
+# Ensure correct permissions on the app directory
+RUN chown -R 1001:0 /app && fix-permissions /app
+
+# Switch to non-root user for running the app
+USER 1001
+
+# Set the entry point for the application
+ENTRYPOINT ["dotnet", "HelmCsharpSDK.dll"]

@@ -1,0 +1,54 @@
+# Use the .NET 8 build runtime image as the base
+FROM dotnet-8-runtime
+
+# DOTNET_SDK_VERSION must be set to the full SDK version, unless IS_CI is set to true.
+ARG DOTNET_SDK_VERSION=8.0
+ARG RELEASE=1
+ARG IS_CI
+ARG DOTNET_TARBALL
+
+ENV PATH=/opt/app-root/src/.local/bin:/opt/app-root/src/bin:/opt/app-root/.dotnet/tools:${PATH} \
+    DOTNET_GENERATE_ASPNET_CERTIFICATE=false \
+    DOTNET_NOLOGO=true \
+    DOTNET_SDK_VERSION=$DOTNET_SDK_VERSION
+
+# Switch to root for package installs
+USER 0
+
+# Install .NET SDK and any other necessary dependencies
+RUN [ -n "${DOTNET_TARBALL}" ] || ( \
+    INSTALL_PKGS="dotnet-sdk-8.0 procps-ng" && \
+    microdnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=0 $INSTALL_PKGS && \
+    microdnf clean all -y && \
+    rm -rf /var/cache/dnf/* )
+
+# Tarball install (in case the .NET SDK is provided as a tarball)
+RUN [ -z "${DOTNET_TARBALL}" ] || ( \
+    INSTALL_PKGS="procps-ng" && \
+    microdnf install -y --setopt=tsflags=nodocs --setopt=install_weak_deps=0 $INSTALL_PKGS && \
+    microdnf clean all -y && \
+    rm -rf /var/cache/dnf/* )
+
+# Check the versions of the environment variables match the installed versions.
+RUN [ "$IS_CI" == "true" ] || ( \
+        echo "Checking framework versions ${DOTNET_VERSION} and ${ASPNET_VERSION} against:\n$(dotnet --list-runtimes)" && \
+        dotnet --list-runtimes | grep -E "Microsoft.NETCore.App ${DOTNET_VERSION}\.([0-9]+)" && \
+        dotnet --list-runtimes | grep -E "Microsoft.AspNetCore.App ${ASPNET_VERSION}\.([0-9]+)" && \
+        echo "Checking SDK version ${DOTNET_SDK_VERSION} against:\n$(dotnet --list-sdks)" && \
+        dotnet --list-sdks | grep -E "^${DOTNET_SDK_VERSION}\.([0-9]+)" )
+
+# Set the working directory for the application
+RUN mkdir /opt/app-root/src
+WORKDIR /opt/app-root/src
+
+# Fix ownership for non-root user access
+RUN chown -R $APP_UID:0 /opt/app-root && fix-permissions /opt/app-root
+
+# Needed for the `dotnet watch` to detect changes in a container
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+
+# Run container rootless
+USER $APP_UID
+
+# Set the default CMD to start a shell with JSON array syntax
+CMD ["/bin/bash"]

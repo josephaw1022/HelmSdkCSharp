@@ -1,0 +1,93 @@
+# Use AlmaLinux 9.5 minimal image as the base
+FROM almalinux:9.5-minimal
+
+# DOTNET_VERSION and ASPNET_VERSION must be set to the full framework versions, unless IS_CI is set to true.
+ARG DOTNET_VERSION=8.0
+ARG ASPNET_VERSION=8.0
+ARG RELEASE=1
+ARG IS_CI
+ARG DOTNET_TARBALL
+
+# This image provides a .NET 8.0 environment you can use to run your .NET applications.
+EXPOSE 8080
+
+ENV HOME=/opt/app-root \
+    PATH=/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+    DOTNET_APP_PATH=/opt/app-root/app \
+    DOTNET_DATA_PATH=/opt/app-root/data \
+    DOTNET_DEFAULT_CMD=default-cmd.sh \
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    NUGET_XMLDOC_MODE=skip \
+    ASPNETCORE_URLS=http://*:8080 \
+    APP_UID=1001 \
+    DOTNET_VERSION=$DOTNET_VERSION \
+    ASPNET_VERSION=$ASPNET_VERSION
+
+# Install essential tools and packages using microdnf
+RUN microdnf install -y \
+    aspnetcore-runtime-8.0 \
+    findutils \
+    shadow-utils \
+    tar \
+    gzip \
+    && \
+    # Restore timezones
+    ( microdnf reinstall tzdata -y || microdnf update tzdata -y ) && \
+    microdnf clean all -y && \
+    rm -rf /var/cache/dnf/*
+
+# Install kubectl
+RUN curl -LO https://dl.k8s.io/release/v1.26.4/bin/linux/amd64/kubectl && \
+    chmod +x kubectl && \
+    mv kubectl /usr/local/bin/kubectl
+
+# Install Helm
+RUN curl https://get.helm.sh/helm-v3.10.0-linux-amd64.tar.gz -o helm-v3.10.0-linux-amd64.tar.gz && \
+    tar -zxvf helm-v3.10.0-linux-amd64.tar.gz && \
+    mv linux-amd64/helm /usr/local/bin/helm && \
+    rm -rf helm-v3.10.0-linux-amd64.tar.gz linux-amd64
+
+
+# Add .NET from a tarball for CI/development.
+RUN [ -z "${DOTNET_TARBALL}" ] || ( \
+    microdnf install -y tar gzip unzip findutils shadow-utils libicu && \
+    ( microdnf reinstall tzdata -y || microdnf update tzdata -y ) && \
+    curl "${DOTNET_TARBALL}" -o /tmp/dotnet.tar.gz && \
+    mkdir /opt/dotnet && \
+    tar -xf /tmp/dotnet.tar.gz -C /opt/dotnet && \
+    ln -s /opt/dotnet/dotnet /usr/bin/dotnet && \
+    mkdir /etc/dotnet/ && \
+    echo '/opt/dotnet' > /etc/dotnet/install_location )
+
+# Check the versions of the environment variables match the installed versions.
+RUN [ "$IS_CI" == "true" ] || ( \
+        printf "Checking framework versions ${DOTNET_VERSION} and ${ASPNET_VERSION} against:\n$(dotnet --list-runtimes)" && \
+        dotnet --list-runtimes | grep -E "Microsoft.NETCore.App ${DOTNET_VERSION}\.[0-9]+" && \
+        dotnet --list-runtimes | grep -E "Microsoft.AspNetCore.App ${ASPNET_VERSION}\.[0-9]+" )
+
+# Add default user
+RUN mkdir -p ${DOTNET_APP_PATH} ${DOTNET_DATA_PATH} && \
+    useradd -u $APP_UID -r -g 0 -d ${HOME} -s /sbin/nologin \
+      -c "Default Application User" default
+
+
+
+# In order to drop the root user, we have to make some directories world writable
+RUN chown -R $APP_UID:0 /opt/app-root
+
+# Ensure the fix-permissions script is copied to /usr/bin and made executable
+COPY ./root/usr/bin/fix-permissions /usr/bin/fix-permissions
+RUN chmod +x /usr/bin/fix-permissions
+
+# Copy the contrib directory and other necessary files
+COPY ./contrib/ /opt/app-root
+COPY ./root/usr/bin /usr/bin
+
+# Run container rootless.
+USER $APP_UID
+
+
+
+WORKDIR ${DOTNET_APP_PATH}
+COPY default-cmd.sh ${DOTNET_DEFAULT_CMD}
+CMD ["./${DOTNET_DEFAULT_CMD}"]
