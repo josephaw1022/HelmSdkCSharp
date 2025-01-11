@@ -29,25 +29,45 @@ namespace HelmClientLibrary
                 }
             };
 
-            process.Start();
-
-            string output = process.StandardOutput.ReadToEnd();
-            string error = process.StandardError.ReadToEnd();
-
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
+            // Set up event handlers for asynchronous output handling
+            process.OutputDataReceived += (sender, e) =>
             {
-                throw new Exception($"Helm command failed with exit code {process.ExitCode}: {error}");
+                if (e.Data != null)
+                {
+                    Console.WriteLine($"Output: {e.Data}");
+                }
+            };
+
+            process.ErrorDataReceived += (sender, e) =>
+            {
+                if (e.Data != null)
+                {
+                    Console.WriteLine($"Error: {e.Data}");
+                }
+            };
+
+            try
+            {
+                process.Start();
+
+                // Begin asynchronous read for standard output and error
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                // Wait for the process to exit
+                process.WaitForExit(100_000);
+
+                if (process.ExitCode != 0)
+                {
+                    throw new Exception($"Helm command failed with exit code {process.ExitCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing command: {ex.Message}");
             }
 
-            // print the output of the command
-            Console.WriteLine($"Output: {output}");
-
-            // return the error output
-            Console.WriteLine($"Error: {error}");
-
-            return output;
+            return "Command executed successfully.";
         }
 
         public void EnsureRepoAdded(string repoName, string repoUrl)

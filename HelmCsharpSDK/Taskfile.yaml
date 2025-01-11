@@ -22,4 +22,12 @@ tasks:
     desc: "Run the .NET 8 console application"
     cmds:
       - echo "Running the .NET 8 console application..."
-      - docker run -it --rm dotnet-console-app
+      - docker run -it --rm --net=host -v ${HOME}/.kube/config:/root/.kube/config dotnet-console-app --privileged
+
+
+  test:
+    cmds:
+      - kind delete cluster
+      - kind create cluster
+      - task: build-image
+      - task: run-image
